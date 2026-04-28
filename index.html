@@ -1,373 +1,353 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Snake Emoji Arcade</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Math Forest - Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-sky: #a5f3fc;
+            --grass-land: #22c55e;
+            --panel-bg: rgba(255, 255, 255, 0.9);
+        }
 
-<style>
-    body {
-        margin: 0;
-        background: #0a0a0a;
-        color: white;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+        body {
+            margin: 0;
+            background-color: #1a1a1a;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+            overflow: hidden;
+        }
 
-    #hud {
-        width: 100%;
-        background: #1a1a1a;
-        padding: 15px 0;
-        font-size: 22px;
-        border-bottom: 3px solid #333;
-        text-align: center;
-        font-weight: bold;
-    }
+        #game-view {
+            width: 1000px;
+            height: 600px;
+            background-color: var(--bg-sky);
+            border: 10px solid #444;
+            position: relative;
+            image-rendering: pixelated;
+            display: flex;
+        }
 
-    #main-layout {
-        display: flex;
-        flex-direction: row;
-        gap: 25px;
-        padding: 20px;
-        align-items: flex-start;
-    }
+        /* Sidebar Stats & Instructions */
+        #sidebar {
+            width: 280px;
+            background: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-right: 6px solid #222;
+            z-index: 5;
+            overflow-y: auto;
+        }
 
-    #game-container {
-        position: relative;
-        border: 4px solid #444;
-        border-radius: 4px;
-        overflow: hidden;
-    }
+        .stat-box { text-align: center; border-bottom: 2px solid #444; padding-bottom: 10px; }
+        .stat-label { font-size: 8px; color: #aaa; margin-bottom: 8px; }
+        .stat-value { font-size: 14px; color: #fbbf24; }
+        #mode-label { color: #00FFFF; font-size: 9px; margin-top: 5px; }
 
-    canvas { background: #111; display: block; }
+        /* Instruction Section */
+        .how-to-play {
+            background: #222;
+            padding: 15px;
+            border-radius: 4px;
+            border: 2px dashed #555;
+        }
+        .how-to-play h3 { font-size: 10px; color: #fbbf24; margin-top: 0; text-align: center; }
+        .how-to-play ul { padding: 0; list-style: none; margin: 0; }
+        .how-to-play li { font-size: 7px; line-height: 1.8; color: #ddd; margin-bottom: 8px; }
+        .key { color: #00FFFF; font-weight: bold; }
 
-    #side-panel {
-        width: 320px;
-        background: #1a1a1a;
-        border: 2px solid #333;
-        padding: 20px;
-        border-radius: 10px;
-    }
+        /* Main Area */
+        #main-canvas { flex-grow: 1; position: relative; overflow: hidden; }
 
-    h3 { color: #2ecc71; border-bottom: 1px solid #333; padding-bottom: 8px; margin-top: 0; }
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+        }
 
-    .control-box {
-        background: #222;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 15px;
-        border-left: 4px solid #2ecc71;
-    }
+        .mode-select { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .mode-btn { background: #444; color: white; border: 4px solid #666; padding: 10px; cursor: pointer; font-family: 'Press Start 2P'; font-size: 8px; }
+        .mode-btn.active { background: #fbbf24; border-color: #b45309; color: #333; }
 
-    .icon-list { list-style: none; padding: 0; }
-    .icon-list li { margin-bottom: 15px; display: flex; align-items: center; font-size: 14px; }
-    .icon-list span { font-size: 26px; margin-right: 15px; width: 35px; text-align: center; }
+        /* Gameplay UI */
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 10;
+        }
 
-    .timer-box {
-        margin-top: 10px;
-        padding: 10px;
-        border-radius: 6px;
-        text-align: center;
-        font-weight: bold;
-        display: none;
-        font-size: 14px;
-    }
-    .active-bg { background: #2980b9; color: white; } 
-    .refresh-bg { background: #f39c12; color: black; } 
+        #timer-display { font-size: 14px; color: #333; background: #fff; padding: 5px 10px; border: 3px solid #333; }
 
-    .overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 10;
-    }
+        #quit-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ef4444;
+            color: white;
+            border: 3px solid #7f1d1d;
+            padding: 5px 10px;
+            font-family: 'Press Start 2P';
+            font-size: 10px;
+            cursor: pointer;
+        }
 
-    .hidden { display: none !important; }
+        #math-card {
+            background: var(--panel-bg);
+            padding: 15px;
+            border: 4px solid #333;
+            text-align: center;
+        }
 
-    .key-hint {
-        margin-top: 25px;
-        padding: 15px 30px;
-        border: 3px solid #2ecc71;
-        background: rgba(46, 204, 113, 0.1);
-        color: #2ecc71;
-        font-weight: bold;
-        font-size: 22px;
-        border-radius: 10px;
-        animation: pulse 1.5s infinite;
-    }
+        .shake { animation: shake 0.3s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+        }
 
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-</style>
+        #progress-container { width: 250px; height: 20px; border: 4px solid #333; background: #fff; }
+        #progress-bar { width: 0%; height: 100%; background: #22c55e; transition: width 0.3s ease; }
+
+        input { width: 120px; font-family: 'Press Start 2P'; font-size: 20px; text-align: center; border: 4px solid #333; margin-top: 10px; outline: none; }
+
+        /* Plant Styles */
+        #tree-world { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); }
+        .pixel-grid { display: grid; grid-template-columns: repeat(10, 15px); grid-template-rows: repeat(10, 15px); }
+        .p { width: 15px; height: 15px; }
+        .s { background: #5d4037; } 
+        .l { background: #2e7d32; } 
+        .f { background: var(--flower-color, #f06292); } 
+        .n { background: transparent; }
+
+        #grass { position: absolute; bottom: 0; width: 100%; height: 100px; background: var(--grass-land); border-top: 6px solid #1b5e20; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button.main-play { padding: 15px 25px; background: #fbbf24; border: 6px solid #b45309; font-family: 'Press Start 2P'; cursor: pointer; font-size: 12px; }
+        button.alt-play { padding: 15px 25px; background: #444; border: 6px solid #222; color: white; font-family: 'Press Start 2P'; cursor: pointer; font-size: 12px; }
+
+        .hidden { display: none !important; }
+    </style>
 </head>
-
 <body>
 
-<div id="hud">
-    ❤️ <span id="lives-val">3</span> | 
-    🍎 <span id="apples-val">0</span> | 
-    📏 <span id="length-val">1</span> | 
-    🏆 Best: <span id="highscore-val">0</span>
-</div>
+    <div id="game-view">
+        <div id="sidebar">
+            <div class="stat-box">
+                <div style="font-size: 24px;">🌳</div>
+                <div class="stat-label">TOTAL TREES</div>
+                <div id="total-trees" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+                <div style="font-size: 24px;">🏆</div>
+                <div class="stat-label">BEST TIME</div>
+                <div id="mode-label">PLUS</div>
+                <div id="best-time" class="stat-value">--s</div>
+            </div>
 
-<div id="main-layout">
-    <div id="game-container">
-        <canvas id="game" width="600" height="600"></canvas>
-
-        <div id="main-menu" class="overlay">
-            <h1 style="font-size: 48px; margin-bottom: 0;">🐍 SNAKE ARCADE</h1>
-            <div class="key-hint">Press [ ENTER ] to Start</div>
+            <div class="how-to-play">
+                <h3>HOW TO PLAY</h3>
+                <ul>
+                    <li>1. Select a <span class="key">MATH MODE</span>.</li>
+                    <li>2. Solve <span class="key">10 PROBLEMS</span>.</li>
+                    <li>3. Type and press <span class="key">ENTER</span>.</li>
+                    <li>4. Correct answers grow the tree!</li>
+                    <li>5. <span style="color: #ef4444;">ERRORS</span> reduce progress!</li>
+                </ul>
+            </div>
         </div>
 
-        <div id="death-menu" class="overlay hidden">
-            <h1 style="color: #e74c3c; font-size: 48px;">ELIMINATED</h1>
-            <p id="final-stats"></p>
-            <div class="key-hint" style="border-color: #e74c3c; color: #e74c3c;">Press [ ENTER ] to Restart</div>
+        <div id="main-canvas">
+            <div id="menu" class="overlay">
+                <h1 style="color: #fbbf24; font-size: 20px;">MATH FOREST</h1>
+                <p style="font-size: 8px;">CHOOSE A MODE TO BEGIN</p>
+                <div class="mode-select">
+                    <button class="mode-btn active" onclick="setMode('plus', this)">PLUS (+)</button>
+                    <button class="mode-btn" onclick="setMode('minus', this)">MINUS (-)</button>
+                    <button class="mode-btn" onclick="setMode('times', this)">TIMES (×)</button>
+                    <button class="mode-btn" onclick="setMode('divide', this)">DIVIDE (÷)</button>
+                </div>
+                <button class="main-play" onclick="startGame()">START RUN</button>
+            </div>
+
+            <div id="win-screen" class="overlay hidden">
+                <h2 style="color: #22c55e;">BLOOMED!</h2>
+                <p id="final-stats" style="font-size: 10px; line-height: 1.6;"></p>
+                <div class="btn-group">
+                    <button class="main-play" onclick="resetForNewTree()">AGAIN</button>
+                    <button class="alt-play" onclick="goToMenu()">MENU</button>
+                </div>
+            </div>
+
+            <div id="ui-layer" class="hidden">
+                <button id="quit-btn" onclick="goToMenu()">X</button>
+                <div id="timer-display">TIME: 0.0s</div>
+                <div id="progress-container"><div id="progress-bar"></div></div>
+                <div id="math-card">
+                    <div id="question" style="font-size: 18px;">Ready?</div>
+                    <input type="number" id="answer-input">
+                </div>
+            </div>
+
+            <div id="tree-world" class="hidden"><div id="tree-sprite" class="pixel-grid"></div></div>
+            <div id="grass"></div>
         </div>
     </div>
 
-    <div id="side-panel">
-        <h3>🎮 Manual & Controls</h3>
-        
-        <div class="control-box">
-            <b>Move Snake:</b> Use <b>W, A, S, D</b> keys<br>
-            <b>Start/Restart:</b> Press <b>ENTER</b>
-        </div>
-        
-        <ul class="icon-list">
-            <li><span>🍎</span> <b>Apple:</b> Grow + Score.</li>
-            <li><span>🟢</span> <b>Green:</b> Shrink Snake.</li>
-            <li><span>⚡</span> <b>Lightning:</b> 2x Speed (30s).</li>
-            <li><span>🛡️</span> <b>Shield:</b> Summon Ally Robot.</li>
-            <li><span>👾</span> <b>Alien:</b> Fast Enemy (-1 Life).</li>
-            <li><span>🤖</span> <b>Robot:</b> Hunts & kills aliens.</li>
-        </ul>
+    <script>
+        let score = 0;
+        let currentAnswer = 0;
+        let gameMode = 'plus';
+        let startTime, timerInterval;
+        const totalNeeded = 10;
 
-        <hr style="border: 0; border-top: 1px solid #333; margin: 15px 0;">
+        // Reset variables (Starts fresh every time the page loads)
+        let totalTrees = 0;
+        let bestTimes = {
+            plus: null, minus: null, times: null, divide: null
+        };
 
-        <div id="active-speed-timer" class="timer-box active-bg">⚡ SPEED BOOST: <span id="speed-active-sec">30</span>s</div>
-        <div id="refresh-speed-timer" class="timer-box refresh-bg">⚡ SPEED REFRESH: <span id="speed-refresh-sec">30</span>s</div>
-
-        <div id="active-bot-timer" class="timer-box active-bg">🤖 BOT ACTIVE: <span id="bot-active-sec">30</span>s</div>
-        <div id="refresh-bot-timer" class="timer-box refresh-bg">⏳ BOT REFRESH: <span id="bot-refresh-sec">180</span>s</div>
-    </div>
-</div>
-
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const gridSize = 20;
-const tileCount = 30;
-
-let snake, dir, nextDir, lives, apples, foods, enemies, ally, allyActive;
-let botCdActive, botCdRem, botActiveRem;
-let speedCdActive, speedCdRem, speedActiveRem;
-let gameRunning = false;
-let highscore = 0; 
-let menuActive = "main"; 
-let currentSpeed = 100;
-
-function resetGameState() {
-    snake = [{x: 15, y: 15}];
-    dir = {x: 0, y: 0};
-    nextDir = {x: 0, y: 0};
-    lives = 3;
-    apples = 0;
-    foods = [];
-    enemies = [];
-    ally = null;
-    allyActive = false;
-    botCdActive = false;
-    speedCdActive = false;
-    currentSpeed = 100;
-
-    document.querySelectorAll('.timer-box').forEach(b => b.style.display = 'none');
-
-    for (let i = 0; i < 15; i++) spawnFood();
-    for (let i = 0; i < 6; i++) spawnEnemy();
-    spawnSpeed();
-    spawnAlly();
-}
-
-function startGame() {
-    resetGameState();
-    document.getElementById("main-menu").classList.add("hidden");
-    document.getElementById("death-menu").classList.add("hidden");
-    menuActive = "none";
-    gameRunning = true;
-    updateHUD();
-    requestAnimationFrame(gameLoop);
-}
-
-window.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-        if (menuActive === "main" || menuActive === "death") startGame();
-    }
-    if (!gameRunning) return;
-    const k = e.key.toLowerCase();
-    if (k === "w" && dir.y === 0) nextDir = {x: 0, y: -1};
-    if (k === "s" && dir.y === 0) nextDir = {x: 0, y: 1};
-    if (k === "a" && dir.x === 0) nextDir = {x: -1, y: 0};
-    if (k === "d" && dir.x === 0) nextDir = {x: 1, y: 0};
-});
-
-function spawnFood() {
-    foods.push({ x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount), type: Math.random() < 0.8 ? "apple" : "green" });
-}
-function spawnEnemy() { enemies.push({ x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount) }); }
-function spawnSpeed() { foods.push({ x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount), type: "speed" }); }
-function spawnAlly() { foods.push({ x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount), type: "ally" }); }
-
-let lastUpdate = 0;
-
-function gameLoop(timestamp) {
-    if (!gameRunning) return;
-    if (timestamp - lastUpdate > currentSpeed) {
-        update();
-        lastUpdate = timestamp;
-    }
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-function update() {
-    dir = nextDir;
-    if (dir.x === 0 && dir.y === 0) return; 
-
-    let head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-
-    if (head.x < 0 || head.y < 0 || head.x >= tileCount || head.y >= tileCount) { triggerGameOver(); return; }
-    for(let i=0; i<snake.length; i++) { if(head.x === snake[i].x && head.y === snake[i].y) { triggerGameOver(); return; } }
-
-    snake.unshift(head);
-    let ate = false;
-
-    for (let i = 0; i < foods.length; i++) {
-        let f = foods[i];
-        if (f.x === head.x && f.y === head.y) {
-            if (f.type === "apple") { apples++; ate = true; spawnFood(); }
-            else if (f.type === "green") { if (snake.length > 2) snake.pop(); }
-            else if (f.type === "speed" && !speedCdActive) { activateSpeed(); }
-            else if (f.type === "ally" && !botCdActive) { activateBot(head.x, head.y); }
-            foods.splice(i, 1);
-            break;
+        function updateSidebar() {
+            document.getElementById('total-trees').innerText = totalTrees;
+            document.getElementById('mode-label').innerText = gameMode.toUpperCase();
+            let time = bestTimes[gameMode];
+            document.getElementById('best-time').innerText = time ? time.toFixed(1) + 's' : '--s';
         }
-    }
+        updateSidebar();
 
-    if (!ate) snake.pop();
+        const maps = {
+            seed: ['n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','s','s','n','n','n','n','n','n','n','n','s','s','n','n','n','n'],
+            sprout: ['n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','n','l','n','n','n','n','n','n','n','l','n','s','n','l','n','n','n','n','n','n','n','s','n','n','n','n','n','n','n','n','n','s','n','n','n','n','n','n','n','n','n','s','n','n','n','n','n'],
+            tree: ['n','n','f','f','f','f','n','n','n','n','n','f','f','f','f','f','f','n','n','n','n','f','f','f','f','f','f','n','n','n','n','n','f','f','f','f','n','n','n','n','n','n','n','s','s','n','n','n','n','n','n','n','l','s','s','l','n','n','n','n','n','n','n','s','s','n','n','n','n','n','n','n','n','s','s','n','n','n','n','n','n','n','n','s','s','n','n','n','n','n','n','n','n','s','s','n','n','n','n','n']
+        };
 
-    enemies.forEach((e) => {
-        if(Math.random() < 0.9) {
-            e.x += Math.floor(Math.random() * 3) - 1; e.y += Math.floor(Math.random() * 3) - 1;
-            e.x = Math.max(0, Math.min(tileCount - 1, e.x)); e.y = Math.max(0, Math.min(tileCount - 1, e.y));
+        function setMode(mode, btn) {
+            gameMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateSidebar();
         }
-        if (e.x === head.x && e.y === head.y) {
-            lives--;
-            if (lives <= 0) triggerGameOver();
-            else { snake = [{x: 15, y: 15}]; dir = {x:0, y:0}; nextDir = {x:0, y:0}; }
+
+        function startGame() {
+            document.getElementById('menu').classList.add('hidden');
+            document.getElementById('win-screen').classList.add('hidden');
+            document.getElementById('ui-layer').classList.remove('hidden');
+            document.getElementById('tree-world').classList.remove('hidden');
+            score = 0;
+            updateUI();
+            nextQuestion();
+            
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                let elapsed = (Date.now() - startTime) / 1000;
+                document.getElementById('timer-display').innerText = `TIME: ${elapsed.toFixed(1)}s`;
+            }, 100);
         }
-    });
 
-    if (allyActive && ally && enemies.length > 0) {
-        let target = enemies[0];
-        if (ally.x < target.x) ally.x++; else if (ally.x > target.x) ally.x--;
-        if (ally.y < target.y) ally.y++; else if (ally.y > target.y) ally.y--;
-        enemies.forEach((e, i) => { if (e.x === ally.x && e.y === ally.y) { enemies.splice(i, 1); setTimeout(() => spawnEnemy(), 5000); } });
-    }
-    updateHUD();
-}
-
-function activateBot(startX, startY) {
-    ally = {x: startX, y: startY};
-    allyActive = true;
-    botActiveRem = 30;
-    document.getElementById("active-bot-timer").style.display = "block";
-    let t = setInterval(() => {
-        if (!gameRunning) { clearInterval(t); return; }
-        botActiveRem--;
-        document.getElementById("bot-active-sec").innerText = botActiveRem;
-        if (botActiveRem <= 0) {
-            clearInterval(t); ally = null; allyActive = false;
-            document.getElementById("active-bot-timer").style.display = "none";
-            startBotRefresh();
+        function goToMenu() {
+            clearInterval(timerInterval);
+            document.getElementById('ui-layer').classList.add('hidden');
+            document.getElementById('win-screen').classList.add('hidden');
+            document.getElementById('tree-world').classList.add('hidden');
+            document.getElementById('menu').classList.remove('hidden');
         }
-    }, 1000);
-}
 
-function startBotRefresh() {
-    botCdActive = true; botCdRem = 180;
-    document.getElementById("refresh-bot-timer").style.display = "block";
-    let t = setInterval(() => {
-        if (!gameRunning) { clearInterval(t); return; }
-        botCdRem--;
-        document.getElementById("bot-refresh-sec").innerText = botCdRem;
-        if (botCdRem <= 0) { clearInterval(t); botCdActive = false; document.getElementById("refresh-bot-timer").style.display = "none"; spawnAlly(); }
-    }, 1000);
-}
-
-function activateSpeed() {
-    currentSpeed = 50; 
-    speedActiveRem = 30;
-    document.getElementById("active-speed-timer").style.display = "block";
-    let t = setInterval(() => {
-        if (!gameRunning) { clearInterval(t); return; }
-        speedActiveRem--;
-        document.getElementById("speed-active-sec").innerText = speedActiveRem;
-        if (speedActiveRem <= 0) {
-            clearInterval(t); currentSpeed = 100;
-            document.getElementById("active-speed-timer").style.display = "none";
-            startSpeedRefresh();
+        function renderTree(map) {
+            const grid = document.getElementById('tree-sprite');
+            grid.innerHTML = '';
+            grid.style.setProperty('--flower-color', ['#ff006e', '#8338ec', '#3a86ff', '#ffbe0b'][Math.floor(Math.random()*4)]);
+            map.forEach(p => {
+                const d = document.createElement('div');
+                d.className = 'p ' + p;
+                grid.appendChild(d);
+            });
         }
-    }, 1000);
-}
 
-function startSpeedRefresh() {
-    speedCdActive = true; speedCdRem = 30;
-    document.getElementById("refresh-speed-timer").style.display = "block";
-    let t = setInterval(() => {
-        if (!gameRunning) { clearInterval(t); return; }
-        speedCdRem--;
-        document.getElementById("speed-refresh-sec").innerText = speedCdRem;
-        if (speedCdRem <= 0) { clearInterval(t); speedCdActive = false; document.getElementById("refresh-speed-timer").style.display = "none"; spawnSpeed(); }
-    }, 1000);
-}
+        function nextQuestion() {
+            let n1, n2, symbol;
+            if(gameMode === 'plus') { n1 = Math.floor(Math.random()*12); n2 = Math.floor(Math.random()*12); currentAnswer = n1 + n2; symbol = '+'; }
+            else if(gameMode === 'minus') { n1 = Math.floor(Math.random()*15) + 5; n2 = Math.floor(Math.random()*n1); currentAnswer = n1 - n2; symbol = '-'; }
+            else if(gameMode === 'times') { n1 = Math.floor(Math.random()*10); n2 = Math.floor(Math.random()*5); currentAnswer = n1 * n2; symbol = '×'; }
+            else { n2 = Math.floor(Math.random()*5) + 1; currentAnswer = Math.floor(Math.random()*10); n1 = n2 * currentAnswer; symbol = '÷'; }
+            
+            document.getElementById('question').innerText = `${n1} ${symbol} ${n2} = ?`;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('answer-input').focus();
+        }
 
-function draw() {
-    ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    snake.forEach((s, i) => { ctx.fillStyle = i === 0 ? "#2ecc71" : "#27ae60"; ctx.fillRect(s.x * gridSize, s.y * gridSize, gridSize - 2, gridSize - 2); });
-    if (allyActive && ally) { ctx.font = "20px Arial"; ctx.fillText("🤖", ally.x * gridSize, ally.y * gridSize + 17); }
-    ctx.font = "18px Arial";
-    foods.forEach(f => {
-        let icon = f.type === "apple" ? "🍎" : f.type === "green" ? "🟢" : f.type === "speed" ? "⚡" : "🛡️";
-        ctx.fillText(icon, f.x * gridSize, f.y * gridSize + 17);
-    });
-    enemies.forEach(e => ctx.fillText("👾", e.x * gridSize, e.y * gridSize + 17));
-}
+        document.getElementById('answer-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                const val = parseInt(e.target.value);
+                if(val === currentAnswer) {
+                    score++;
+                    updateUI();
+                    if(score >= totalNeeded) win();
+                    else nextQuestion();
+                } else {
+                    score = Math.max(0, score - 1);
+                    document.getElementById('math-card').classList.add('shake');
+                    setTimeout(() => document.getElementById('math-card').classList.remove('shake'), 300);
+                    updateUI();
+                    e.target.value = '';
+                }
+            }
+        });
 
-function updateHUD() {
-    document.getElementById("lives-val").innerText = lives;
-    document.getElementById("apples-val").innerText = apples;
-    document.getElementById("length-val").innerText = snake.length;
-}
+        function updateUI() {
+            document.getElementById('progress-bar').style.width = (score/totalNeeded)*100 + '%';
+            if (score >= 8) renderTree(maps.tree);
+            else if (score >= 4) renderTree(maps.sprout);
+            else renderTree(maps.seed);
+        }
 
-function triggerGameOver() {
-    gameRunning = false; menuActive = "death";
-    if (apples > highscore) { highscore = apples; document.getElementById("highscore-val").innerText = highscore; }
-    document.getElementById("final-stats").innerHTML = `🍎 Score: ${apples} | 📏 Length: ${snake.length}`;
-    document.getElementById("death-menu").classList.remove("hidden");
-}
+        function win() {
+            clearInterval(timerInterval);
+            let finishTime = (Date.now() - startTime) / 1000;
+            totalTrees++;
+            
+            let isNewBest = false;
+            let prevBest = bestTimes[gameMode];
+            
+            if (!prevBest || finishTime < prevBest) {
+                bestTimes[gameMode] = finishTime;
+                isNewBest = true;
+            }
+            
+            updateSidebar();
 
-window.onload = () => { window.focus(); };
-</script>
+            document.getElementById('final-stats').innerHTML = 
+                `<span style="color:#00FFFF">${gameMode.toUpperCase()} RUN</span><br>` +
+                `TIME: ${finishTime.toFixed(1)}s<br>` + 
+                (isNewBest ? `<span style="color:#fbbf24">NEW RECORD!</span>` : `BEST: ${prevBest.toFixed(1)}s`);
+
+            document.getElementById('win-screen').classList.remove('hidden');
+            document.getElementById('ui-layer').classList.add('hidden');
+        }
+
+        function resetForNewTree() {
+            startGame();
+        }
+    </script>
 </body>
 </html>
